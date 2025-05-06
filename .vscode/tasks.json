@@ -1,0 +1,56 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "create build dir",
+            "type": "shell",
+            "command": "mkdir -p ${workspaceFolder}/build",
+            "group": "none"
+        },
+        {
+            "label": "fix permission conan",
+            "type": "shell",
+            "command": "sudo chown -R dev:dev /home/dev/.conan2",
+            "group": "none"
+        },
+        {
+            "label": "conan: configure",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "command": "conan",
+            "args": [
+                "install",
+                "--settings=build_type=Debug",
+                "--build=missing",
+                ".."
+            ],
+            "group": "build"
+        },
+        {
+            "label": "conan: build",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "command": "conan",
+            "args": [
+                "build",
+                "--settings=build_type=Debug",
+                ".."
+            ],
+            "group": "build"
+        },
+        {
+            "label": "Test",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "command": "ctest",
+            "args": [],
+            "group": "test"
+        }
+    ]
+}
