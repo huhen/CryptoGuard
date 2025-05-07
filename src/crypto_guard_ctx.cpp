@@ -43,7 +43,9 @@ public:
         ProcessFile(inStream, outStream, CreateChiperParamsFromPassword(password, true));
     }
 
-    void DecryptFile(std::iostream &inStream, std::iostream &outStream, std::string_view password) const {}
+    void DecryptFile(std::iostream &inStream, std::iostream &outStream, std::string_view password) const {
+        ProcessFile(inStream, outStream, CreateChiperParamsFromPassword(password, false));
+    }
 
     std::string CalculateChecksum(std::iostream &inStream) const { return "NOT_IMPLEMENTED"; }
 
