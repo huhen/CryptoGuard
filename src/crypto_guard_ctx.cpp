@@ -1,13 +1,17 @@
 #include "crypto_guard_ctx.h"
 
+#include <iomanip>
+#include <ios>
 #include <iostream>
 #include <memory>
 #include <openssl/evp.h>
+#include <sstream>
 #include <vector>
 
 namespace CryptoGuard {
 
 using EvpCipherCtx = std::unique_ptr<EVP_CIPHER_CTX, decltype([](EVP_CIPHER_CTX *ctx) { EVP_CIPHER_CTX_free(ctx); })>;
+using EvpMdCtx = std::unique_ptr<EVP_MD_CTX, decltype([](EVP_MD_CTX *ctx) { EVP_MD_CTX_free(ctx); })>;
 
 constexpr size_t BUFFER_SIZE = 4096;
 
@@ -47,7 +51,49 @@ public:
         ProcessFile(inStream, outStream, CreateChiperParamsFromPassword(password, false));
     }
 
-    std::string CalculateChecksum(std::iostream &inStream) const { return "NOT_IMPLEMENTED"; }
+    std::string CalculateChecksum(std::iostream &inStream) const {
+        EvpMdCtx ctx{EVP_MD_CTX_new()};
+
+        if (!ctx) {
+            throw std::runtime_error("Message digest create failed");
+        }
+
+        if (!EVP_DigestInit_ex2(ctx.get(), EVP_sha256(), NULL)) {
+            throw std::runtime_error("Message digest initialization failed");
+        }
+
+        std::vector<unsigned char> inBuf(BUFFER_SIZE);
+
+        while (inStream) {
+            inStream.read(reinterpret_cast<char *>(inBuf.data()), BUFFER_SIZE);
+            auto bytesRead = inStream.gcount();
+
+            if (bytesRead > 0) {
+                if (!EVP_DigestUpdate(ctx.get(), inBuf.data(), static_cast<size_t>(bytesRead))) {
+                    throw std::runtime_error("Message digest update failed");
+                }
+            }
+        }
+
+        if (!inStream.eof()) {
+            throw std::runtime_error("Error occurred while reading from input stream");
+        }
+
+        unsigned int md_len;
+        std::array<unsigned char, EVP_MAX_MD_SIZE> md_value;
+        if (!EVP_DigestFinal_ex(ctx.get(), md_value.data(), &md_len)) {
+            throw std::runtime_error("Message digest finalization failed");
+        }
+
+        std::stringstream ss;
+        ss << std::hex << std::uppercase;
+
+        for (size_t i = 0; i != md_len; ++i) {
+            ss << std::setw(2) << std::setfill('0') << static_cast<int>(md_value[i]);
+        }
+
+        return ss.str();
+    }
 
 private:
     static void ProcessFile(std::iostream &inStream, std::iostream &outStream, const AesCipherParams &params) {
