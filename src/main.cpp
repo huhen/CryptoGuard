@@ -1,10 +1,29 @@
 #include "cmd_options.h"
 #include "crypto_guard_ctx.h"
 
+#include <fstream>
 #include <iostream>
 #include <openssl/evp.h>
 #include <print>
 #include <stdexcept>
+
+static std::fstream GetInStream(const std::string &inFileName) {
+    std::fstream inStream(inFileName, std::ios::in | std::ios::binary);
+    if (!inStream) {
+        throw std::runtime_error{std::format("Failed to open input file:{}", inFileName)};
+    }
+
+    return inStream;
+};
+
+static std::fstream GetOutStream(const std::string &outFileName) {
+    std::fstream outStream(outFileName, std::ios::out | std::ios::trunc | std::ios::binary);
+    if (!outStream) {
+        throw std::runtime_error{std::format("Failed to open output file:{}", outFileName)};
+    }
+
+    return outStream;
+};
 
 int main(int argc, char *argv[]) {
     try {
@@ -17,17 +36,39 @@ int main(int argc, char *argv[]) {
 
         using COMMAND_TYPE = CryptoGuard::ProgramOptions::COMMAND_TYPE;
         switch (options.GetCommand()) {
-        case COMMAND_TYPE::ENCRYPT:
+        case COMMAND_TYPE::ENCRYPT: {
+            auto inStream = GetInStream(options.GetInputFile());
+            auto outStream = GetOutStream(options.GetOutputFile());
+
+            cryptoCtx.EncryptFile(inStream, outStream, options.GetPassword());
+            inStream.close();
+            outStream.close();
+
             std::print("File encoded successfully\n");
             break;
+        }
 
-        case COMMAND_TYPE::DECRYPT:
+        case COMMAND_TYPE::DECRYPT: {
+            auto inStream = GetInStream(options.GetInputFile());
+            auto outStream = GetOutStream(options.GetOutputFile());
+
+            cryptoCtx.DecryptFile(inStream, outStream, options.GetPassword());
+            inStream.close();
+            outStream.close();
+
             std::print("File decoded successfully\n");
             break;
+        }
 
-        case COMMAND_TYPE::CHECKSUM:
-            std::print("Checksum: {}\n", "CHECKSUM_NOT_IMPLEMENTED");
+        case COMMAND_TYPE::CHECKSUM: {
+            auto inStream = GetInStream(options.GetInputFile());
+
+            auto checksum = cryptoCtx.CalculateChecksum(inStream);
+            inStream.close();
+
+            std::print("Checksum: {}\n", checksum);
             break;
+        }
 
         default:
             throw std::runtime_error{"Unsupported command"};
