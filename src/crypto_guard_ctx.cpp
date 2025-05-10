@@ -1,9 +1,11 @@
 #include "crypto_guard_ctx.h"
 
+#include <array>
 #include <iomanip>
 #include <ios>
 #include <iostream>
 #include <memory>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <sstream>
 #include <vector>
@@ -55,11 +57,12 @@ public:
         EvpMdCtx ctx{EVP_MD_CTX_new()};
 
         if (!ctx) {
-            throw std::runtime_error("Message digest create failed");
+            throw std::runtime_error{std::format("Message digest create failed\nOpenSSL {}", GetOpenSslErrorMessage())};
         }
 
         if (!EVP_DigestInit_ex2(ctx.get(), EVP_sha256(), NULL)) {
-            throw std::runtime_error("Message digest initialization failed");
+            throw std::runtime_error{
+                std::format("Message digest initialization failed\nOpenSSL {}", GetOpenSslErrorMessage())};
         }
 
         std::vector<unsigned char> inBuf(BUFFER_SIZE);
@@ -70,19 +73,21 @@ public:
 
             if (bytesRead > 0) {
                 if (!EVP_DigestUpdate(ctx.get(), inBuf.data(), static_cast<size_t>(bytesRead))) {
-                    throw std::runtime_error("Message digest update failed");
+                    throw std::runtime_error{
+                        std::format("Message digest update failed\nOpenSSL {}", GetOpenSslErrorMessage())};
                 }
             }
         }
 
         if (!inStream.eof()) {
-            throw std::runtime_error("Error occurred while reading from input stream");
+            throw std::runtime_error{"Error occurred while reading from input stream"};
         }
 
         unsigned int md_len;
         std::array<unsigned char, EVP_MAX_MD_SIZE> md_value;
         if (!EVP_DigestFinal_ex(ctx.get(), md_value.data(), &md_len)) {
-            throw std::runtime_error("Message digest finalization failed");
+            throw std::runtime_error{
+                std::format("Message digest finalization failed\nOpenSSL {}", GetOpenSslErrorMessage())};
         }
 
         std::stringstream ss;
@@ -96,16 +101,27 @@ public:
     }
 
 private:
+    static std::string GetOpenSslErrorMessage() {
+        std::array<char, ERR_MAX_DATA_SIZE> buff;
+
+        auto e = ERR_get_error();
+        ERR_error_string_n(e, buff.data(), buff.size());
+
+        return std::string(buff.data());
+    }
+
     static void ProcessFile(std::iostream &inStream, std::iostream &outStream, const AesCipherParams &params) {
         EvpCipherCtx ctx{EVP_CIPHER_CTX_new()};
         if (!ctx) {
-            throw std::runtime_error("Failed to create cipher context");
+            throw std::runtime_error{
+                std::format("Failed to create cipher context\nOpenSSL {}", GetOpenSslErrorMessage())};
         }
 
         // Инициализируем cipher
         if (!EVP_CipherInit_ex(ctx.get(), params.cipher, nullptr, params.key.data(), params.iv.data(),
                                params.encrypt)) {
-            throw std::runtime_error("Failed to initialize cipher context");
+            throw std::runtime_error{
+                std::format("Failed to initialize cipher context\nOpenSSL {}", GetOpenSslErrorMessage())};
         }
 
         std::vector<unsigned char> outBuf(BUFFER_SIZE + EVP_MAX_BLOCK_LENGTH);
@@ -117,7 +133,7 @@ private:
             if (length > 0) {
                 outStream.write(reinterpret_cast<const char *>(data), length);
                 if (!outStream) {
-                    throw std::runtime_error("Error occurred while writing to output stream");
+                    throw std::runtime_error{"Error occurred while writing to output stream"};
                 }
             }
         };
@@ -129,7 +145,7 @@ private:
             if (bytesRead > 0) {
                 // Обрабатываем данные
                 if (!EVP_CipherUpdate(ctx.get(), outBuf.data(), &outLen, inBuf.data(), bytesRead)) {
-                    throw std::runtime_error("Cipher update failed");
+                    throw std::runtime_error{std::format("Cipher update failed\nOpenSSL {}", GetOpenSslErrorMessage())};
                 }
 
                 write_data(outBuf.data(), outLen);
@@ -137,12 +153,12 @@ private:
         }
 
         if (!inStream.eof()) {
-            throw std::runtime_error("Error occurred while reading from input stream");
+            throw std::runtime_error{"Error occurred while reading from input stream"};
         }
 
         // Заканчиваем работу с cipher
         if (!EVP_CipherFinal_ex(ctx.get(), outBuf.data(), &outLen)) {
-            throw std::runtime_error("Cipher finalization failed");
+            throw std::runtime_error{std::format("Cipher finalization failed\nOpenSSL {}", GetOpenSslErrorMessage())};
         }
 
         write_data(outBuf.data(), outLen);
@@ -157,7 +173,8 @@ private:
                                     params.key.data(), params.iv.data());
 
         if (result == 0) {
-            throw std::runtime_error{"Failed to create a key from password"};
+            throw std::runtime_error{
+                std::format("Failed to create a key from password\nOpenSSL {}", GetOpenSslErrorMessage())};
         }
 
         params.encrypt = isEncrypt ? 1 : 0;
