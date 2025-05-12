@@ -41,8 +41,6 @@ int main(int argc, char *argv[]) {
             auto outStream = GetOutStream(options.GetOutputFile());
 
             cryptoCtx.EncryptFile(inStream, outStream, options.GetPassword());
-            inStream.close();
-            outStream.close();
 
             std::print("File encoded successfully\n");
             break;
@@ -53,8 +51,6 @@ int main(int argc, char *argv[]) {
             auto outStream = GetOutStream(options.GetOutputFile());
 
             cryptoCtx.DecryptFile(inStream, outStream, options.GetPassword());
-            inStream.close();
-            outStream.close();
 
             std::print("File decoded successfully\n");
             break;
@@ -64,7 +60,6 @@ int main(int argc, char *argv[]) {
             auto inStream = GetInStream(options.GetInputFile());
 
             auto checksum = cryptoCtx.CalculateChecksum(inStream);
-            inStream.close();
 
             std::print("Checksum: {}\n", checksum);
             break;
