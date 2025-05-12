@@ -23,48 +23,55 @@ ProgramOptions::ProgramOptions() : desc_("Allowed options") {
 ProgramOptions::~ProgramOptions() = default;
 
 bool ProgramOptions::Parse(int argc, char *argv[]) {
-    try {
-        po::variables_map vm;
+    po::variables_map vm;
 
-        po::store(po::parse_command_line(argc, argv, desc_), vm);
-        po::notify(vm);
+    po::store(po::parse_command_line(argc, argv, desc_), vm);
+    po::notify(vm);
 
-        if (vm.contains("help")) {
-            desc_.print(std::cout);
-            return false;
-        }
+    if (vm.contains("help")) {
+        desc_.print(std::cout);
+        return false;
+    }
 
-        if (const auto &it = vm.find("command"); it != vm.end()) {
-            const auto &command = it->second.as<std::string>();
-            if (const auto &it = commandMapping_.find(command); it != commandMapping_.end()) {
-                command_ = it->second;
-            } else {
-                throw std::invalid_argument{std::format("the unknown argument for option '--command' '{}'", command)};
-            }
+    if (const auto &it = vm.find("command"); it != vm.end()) {
+        const auto &command = it->second.as<std::string>();
+        if (const auto &it = commandMapping_.find(command); it != commandMapping_.end()) {
+            command_ = it->second;
         } else {
-            throw std::invalid_argument{"the required option '--command' is missing"};
+            throw std::invalid_argument{std::format("the unknown argument for option '--command' '{}'", command)};
         }
+    } else {
+        throw std::invalid_argument{"the required option '--command' is missing"};
+    }
 
-        if (const auto &it = vm.find("input"); it != vm.end()) {
-            inputFile_ = it->second.as<std::string>();
-        } else {
-            throw std::invalid_argument{"the required option '--input' is missing"};
+    if (const auto &it = vm.find("input"); it != vm.end()) {
+        inputFile_ = it->second.as<std::string>();
+    } else {
+        throw std::invalid_argument{"the required option '--input' is missing"};
+    }
+
+    if (const auto &it = vm.find("output"); it != vm.end()) {
+        outputFile_ = it->second.as<std::string>();
+    }
+
+    if (const auto &it = vm.find("password"); it != vm.end()) {
+        password_ = it->second.as<std::string>();
+    }
+
+    if (command_ == ProgramOptions::COMMAND_TYPE::CHECKSUM) {
+        if (!outputFile_.empty()) {
+            throw std::invalid_argument{"the option '--output' cannot be used"};
         }
-
-        if (const auto &it = vm.find("output"); it != vm.end()) {
-            outputFile_ = it->second.as<std::string>();
-        } else if (command_ != ProgramOptions::COMMAND_TYPE::CHECKSUM) {
+        if (!password_.empty()) {
+            throw std::invalid_argument{"the option '--password' cannot be used"};
+        }
+    } else {
+        if (outputFile_.empty()) {
             throw std::invalid_argument{"the required option '--output' is missing"};
         }
-
-        if (const auto &it = vm.find("password"); it != vm.end()) {
-            password_ = it->second.as<std::string>();
-        } else if (command_ != ProgramOptions::COMMAND_TYPE::CHECKSUM) {
+        if (password_.empty()) {
             throw std::invalid_argument{"the required option '--password' is missing"};
         }
-    } catch (const std::exception &e) {
-        std::print(std::cerr, "Error: {}\n", e.what());
-        return false;
     }
 
     return true;

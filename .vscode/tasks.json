@@ -40,7 +40,11 @@
                 "--settings=build_type=Debug",
                 ".."
             ],
-            "group": "build"
+            "group": "build",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "create build dir"
+            ]
         },
         {
             "label": "Test",
