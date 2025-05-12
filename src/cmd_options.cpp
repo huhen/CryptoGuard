@@ -52,14 +52,26 @@ bool ProgramOptions::Parse(int argc, char *argv[]) {
 
     if (const auto &it = vm.find("output"); it != vm.end()) {
         outputFile_ = it->second.as<std::string>();
-    } else if (command_ != ProgramOptions::COMMAND_TYPE::CHECKSUM) {
-        throw std::invalid_argument{"the required option '--output' is missing"};
     }
 
     if (const auto &it = vm.find("password"); it != vm.end()) {
         password_ = it->second.as<std::string>();
-    } else if (command_ != ProgramOptions::COMMAND_TYPE::CHECKSUM) {
-        throw std::invalid_argument{"the required option '--password' is missing"};
+    }
+
+    if (command_ == ProgramOptions::COMMAND_TYPE::CHECKSUM) {
+        if (!outputFile_.empty()) {
+            throw std::invalid_argument{"the option '--output' cannot be used"};
+        }
+        if (!password_.empty()) {
+            throw std::invalid_argument{"the option '--password' cannot be used"};
+        }
+    } else {
+        if (outputFile_.empty()) {
+            throw std::invalid_argument{"the required option '--output' is missing"};
+        }
+        if (password_.empty()) {
+            throw std::invalid_argument{"the required option '--password' is missing"};
+        }
     }
 
     return true;
