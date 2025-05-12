@@ -186,5 +186,5 @@ TEST(CryptoGuardCtx, ChecksumBadInput) {
 
     istream.setstate(std::ios::failbit);
 
-    ASSERT_THROW(ctx.CalculateChecksum(istream), std::runtime_error);
+    ASSERT_THROW(auto _ = ctx.CalculateChecksum(istream), std::runtime_error);
 }
