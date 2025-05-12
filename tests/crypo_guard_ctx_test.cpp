@@ -165,18 +165,18 @@ TEST(CryptoGuardCtx, DecryptWrongPassword) {
 TEST(CryptoGuardCtx, ChecksumEmptyInput) {
     CryptoGuard::CryptoGuardCtx ctx;
     std::stringstream istream{""};
-    std::string actual{"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"};
+    std::string expected{"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"};
 
-    std::string expected = ctx.CalculateChecksum(istream);
+    std::string actual = ctx.CalculateChecksum(istream);
     EXPECT_EQ(actual, expected);
 }
 
 TEST(CryptoGuardCtx, ChecksumShortInput) {
     CryptoGuard::CryptoGuardCtx ctx;
     std::stringstream istream{"12341234"};
-    std::string actual{"1718C24B10AEB8099E3FC44960AB6949AB76A267352459F203EA1036BEC382C2"};
+    std::string expected{"1718C24B10AEB8099E3FC44960AB6949AB76A267352459F203EA1036BEC382C2"};
 
-    std::string expected = ctx.CalculateChecksum(istream);
+    std::string actual = ctx.CalculateChecksum(istream);
     EXPECT_EQ(actual, expected);
 }
 
