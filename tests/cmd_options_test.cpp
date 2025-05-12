@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include <vector>
 
 #include "../include/cmd_options.h"
@@ -73,21 +74,21 @@ TEST(ProgramOptions, BadCommand) {
                         "--command",     "bad"};
 
     CryptoGuard::ProgramOptions po;
-    EXPECT_FALSE(po.Parse(args.GetArgC(), args.GetArgV()));
+    ASSERT_THROW(po.Parse(args.GetArgC(), args.GetArgV()), std::invalid_argument);
 }
 
 TEST(ProgramOptions, BadInput) {
     CmdArgsCreator args{"./CryptoGuard", "-i", "-o", "decrypted.txt", "-p", "1234", "--command", "decrypt"};
 
     CryptoGuard::ProgramOptions po;
-    EXPECT_FALSE(po.Parse(args.GetArgC(), args.GetArgV()));
+    ASSERT_THROW(po.Parse(args.GetArgC(), args.GetArgV()), boost::program_options::invalid_command_line_syntax);
 }
 
 TEST(ProgramOptions, BadNoOutput) {
     CmdArgsCreator args{"./CryptoGuard", "-i", "encrypted.txt", "-p", "1234", "--command", "decrypt"};
 
     CryptoGuard::ProgramOptions po;
-    EXPECT_FALSE(po.Parse(args.GetArgC(), args.GetArgV()));
+    ASSERT_THROW(po.Parse(args.GetArgC(), args.GetArgV()), std::invalid_argument);
 }
 
 TEST(ProgramOptions, BadDoubleOutput) {
@@ -95,7 +96,7 @@ TEST(ProgramOptions, BadDoubleOutput) {
                         "1234",          "--command", "decrypt",       "-o", "decrypted2.txt"};
 
     CryptoGuard::ProgramOptions po;
-    EXPECT_FALSE(po.Parse(args.GetArgC(), args.GetArgV()));
+    ASSERT_THROW(po.Parse(args.GetArgC(), args.GetArgV()), boost::program_options::multiple_occurrences);
 }
 
 TEST(ProgramOptions, BadUnknownOption) {
@@ -103,5 +104,5 @@ TEST(ProgramOptions, BadUnknownOption) {
                         "1234",          "--command", "decrypt",       "-e", "decrypted2.txt"};
 
     CryptoGuard::ProgramOptions po;
-    EXPECT_FALSE(po.Parse(args.GetArgC(), args.GetArgV()));
+    ASSERT_THROW(po.Parse(args.GetArgC(), args.GetArgV()), boost::program_options::unknown_option);
 }
