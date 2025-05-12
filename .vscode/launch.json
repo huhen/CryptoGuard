@@ -16,7 +16,14 @@
                 "checksum"
             ],
             "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Launch CryptoGuard GTest",
+            "program": "${workspaceFolder}/build/CryptoGuard_tests",
+            "args": [],
+            "cwd": "${workspaceFolder}/build"
         }
-
     ]
 }
