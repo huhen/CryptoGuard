@@ -20,7 +20,7 @@ public:
     // API
     void EncryptFile(std::iostream &inStream, std::iostream &outStream, std::string_view password) const;
     void DecryptFile(std::iostream &inStream, std::iostream &outStream, std::string_view password) const;
-    std::string CalculateChecksum(std::iostream &inStream) const;
+    [[nodiscard("USE CHECKSUM")]] std::string CalculateChecksum(std::iostream &inStream) const;
 
 private:
     class Impl;

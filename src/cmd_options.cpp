@@ -66,6 +66,9 @@ bool ProgramOptions::Parse(int argc, char *argv[]) {
             throw std::invalid_argument{"the option '--password' cannot be used"};
         }
     } else {
+        if (inputFile_ == outputFile_) {
+            throw std::invalid_argument{"input and output file must not match"};
+        }
         if (outputFile_.empty()) {
             throw std::invalid_argument{"the required option '--output' is missing"};
         }

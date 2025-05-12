@@ -111,6 +111,10 @@ private:
     }
 
     static void ProcessFile(std::iostream &inStream, std::iostream &outStream, const AesCipherParams &params) {
+        if (&inStream == &outStream) {
+            throw std::runtime_error{"Input and output streams must not match"};
+        }
+
         EvpCipherCtx ctx{EVP_CIPHER_CTX_new()};
         if (!ctx) {
             throw std::runtime_error{
